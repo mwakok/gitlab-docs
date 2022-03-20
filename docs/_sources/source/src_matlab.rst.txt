@@ -1,0 +1,12 @@
+src_matlab modules
+==================
+
+.. mat:automodule:: src_matlab 
+    :members:
+    
+
+src_matlab/tests modules
+========================
+
+.. mat:automodule:: src_matlab.test
+    :members:

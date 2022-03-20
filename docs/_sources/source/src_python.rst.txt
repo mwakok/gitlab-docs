@@ -1,0 +1,5 @@
+src_python package
+===================
+
+.. automodule:: src_python.sumNumbers
+   :members:
