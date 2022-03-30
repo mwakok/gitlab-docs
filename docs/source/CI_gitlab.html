@@ -19,7 +19,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="src_python package" href="src_python.html" />
-    <link rel="prev" title="Introduction" href="intro.html" /> 
+    <link rel="prev" title="Testbench’s documentation" href="../index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -39,7 +39,6 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Continuous Integration with Matlab on TU Delft Gitlab</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#background">Background</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#purpose-of-this-guide">Purpose of this guide</a></li>
@@ -111,21 +110,14 @@
 <section id="steps">
 <h3>Steps<a class="headerlink" href="#steps" title="Permalink to this headline"></a></h3>
 <ol class="arabic simple">
-<li><p>Request a TU Delft Virtual Private Server</p></li>
+<li><p>Request a TU Delft Virtual Private Server (VPS)</p></li>
 <li><p>Set up a Gitlab runner (on the VPS)</p></li>
 <li><p>Create a Docker image with a custom Matlab installation (on the VPS)</p></li>
 <li><p>Register a gitlab runner for the Matlab container (on the VPS)</p></li>
 <li><p>Update Matlab runner configuration (on the VPS)</p></li>
 <li><p>Obtain a Matlab license file</p></li>
 <li><p>Configure the CI/CD pipeline</p></li>
-<li><p>Examples of jobs:</p>
-<ul class="simple">
-<li><p>Build sphinx documentation</p></li>
-<li><p>Compile code</p></li>
-<li><p>Push documentation/code to other repository</p></li>
-<li><p>Create additional badges</p></li>
-</ul>
-</li>
+<li><p>Add a job to test the pipeline</p></li>
 </ol>
 </section>
 <section id="glossary-of-terms">
@@ -268,7 +260,7 @@ We have looked into using the Docker images developed by <a class="reference ext
 </section>
 <section id="step-5-update-matlab-runner-configuration">
 <h2>Step 5. Update Matlab runner configuration<a class="headerlink" href="#step-5-update-matlab-runner-configuration" title="Permalink to this headline"></a></h2>
-<p>The runner configurations are stored in <code class="docutils literal notranslate"><span class="pre">/srv/gitlab-runner/config/config.toml</span></code>. To properly configure the Matlab runner, we need to update the config file with the following changes:</p>
+<p>The runner configurations are stored in <code class="docutils literal notranslate"><span class="pre">/srv/gitlab-runner/config/config.toml</span></code>. To configure the Matlab runner, we need to update the config file with the following changes:</p>
 <ul class="simple">
 <li><p>Set option <code class="docutils literal notranslate"><span class="pre">privileged</span> <span class="pre">=</span> <span class="pre">true</span></code></p></li>
 <li><p>Add option <code class="docutils literal notranslate"><span class="pre">pull_policy</span> <span class="pre">=</span> <span class="pre">&quot;if-not-present&quot;</span></code></p></li>
@@ -381,7 +373,7 @@ Under <code class="docutils literal notranslate"><span class="pre">Settings</spa
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">matlab -batch &quot;magic(2)&quot;</span><span class="w"></span>
 </pre></div>
 </div>
-<p>After commiting, the pipeline should successfully run and execute the job <code class="docutils literal notranslate"><span class="pre">check_matlab</span></code>. You can check the status of the pipeline via <code class="docutils literal notranslate"><span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Pipelines</span></code>.</p>
+<p>After commiting, the pipeline should run and execute the job <code class="docutils literal notranslate"><span class="pre">check_matlab</span></code>. You can check the status of the pipeline via <code class="docutils literal notranslate"><span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Pipelines</span></code>.</p>
 <p>If all went well, you have successfully setup a Gitlab runner to run Matlab code. Congrats!</p>
 </section>
 </section>
@@ -390,7 +382,7 @@ Under <code class="docutils literal notranslate"><span class="pre">Settings</spa
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="intro.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../index.html" class="btn btn-neutral float-left" title="Testbench’s documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="src_python.html" class="btn btn-neutral float-right" title="src_python package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

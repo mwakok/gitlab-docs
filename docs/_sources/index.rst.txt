@@ -16,8 +16,6 @@ Table of Contents
    :caption: Contents
    :maxdepth: 2
    
-
-   source/intro
    source/CI_gitlab
    
 .. toctree::

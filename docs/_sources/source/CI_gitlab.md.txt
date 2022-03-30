@@ -16,18 +16,14 @@ With this guide, you will create a Continuous Integration Pipeline on a reposito
 
 
 ### Steps
-1. Request a TU Delft Virtual Private Server
+1. Request a TU Delft Virtual Private Server (VPS)
 1. Set up a Gitlab runner (on the VPS)
 1. Create a Docker image with a custom Matlab installation (on the VPS)
 1. Register a gitlab runner for the Matlab container (on the VPS)
 1. Update Matlab runner configuration (on the VPS)
 1. Obtain a Matlab license file
 1. Configure the CI/CD pipeline
-1. Examples of jobs:
-    - Build sphinx documentation
-    - Compile code
-    - Push documentation/code to other repository
-    - Create additional badges
+1. Add a job to test the pipeline
 
 ### Glossary of terms
 
@@ -175,7 +171,7 @@ Runner registered successfully. Feel free to start it, but if it's running alrea
 
 ## Step 5. Update Matlab runner configuration
 
-The runner configurations are stored in `/srv/gitlab-runner/config/config.toml`. To properly configure the Matlab runner, we need to update the config file with the following changes:
+The runner configurations are stored in `/srv/gitlab-runner/config/config.toml`. To configure the Matlab runner, we need to update the config file with the following changes:
 - Set option `privileged = true`
 - Add option `pull_policy = "if-not-present"`
 - Add option `cap_add = ["NET_ADMIN"]`
@@ -283,6 +279,6 @@ check_matlab:
     # Run a Matlab function/script through the -batch argument
     - matlab -batch "magic(2)"
 ```
-After commiting, the pipeline should successfully run and execute the job `check_matlab`. You can check the status of the pipeline via `CI/CD -> Pipelines`.
+After commiting, the pipeline should run and execute the job `check_matlab`. You can check the status of the pipeline via `CI/CD -> Pipelines`.
 
 If all went well, you have successfully setup a Gitlab runner to run Matlab code. Congrats! 
