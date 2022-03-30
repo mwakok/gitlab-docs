@@ -190,8 +190,8 @@ We have looked into using the Docker images developed by <a class="reference ext
 <span class="c"># To specify which MATLAB release to install in the container, edit the value of the MATLAB_RELEASE argument.</span>
 <span class="c"># Use lower case to specify the release, for example: ARG MATLAB_RELEASE=r2020a</span>
 <span class="k">ARG</span><span class="w"> </span><span class="nv">MATLAB_RELEASE</span><span class="o">=</span>r2021b
-
-<span class="c"># When you start the build stage, this Dockerfile by default uses the Ubuntu-based matlab-deps image.</span>
+<span class="hll">
+</span><span class="c"># When you start the build stage, this Dockerfile by default uses the Ubuntu-based matlab-deps image.</span>
 <span class="c"># To check the available matlab-deps images, see: https://hub.docker.com/r/mathworks/matlab-deps</span>
 <span class="k">FROM</span><span class="w"> </span><span class="s">mathworks/matlab-deps:${MATLAB_RELEASE}</span>
 
@@ -212,8 +212,8 @@ We have looked into using the Docker images developed by <a class="reference ext
     ./mpm install <span class="se">\</span>
     --release<span class="o">=</span><span class="si">${</span><span class="nv">MATLAB_RELEASE</span><span class="si">}</span> <span class="se">\</span>
     --destination<span class="o">=</span>/opt/matlab <span class="se">\</span>
-    --products MATLAB Parallel_Computing_Toolbox Mapping_Toolbox <span class="o">&amp;&amp;</span> <span class="se">\</span>
-    rm -f mpm /tmp/mathworks_root.log <span class="o">&amp;&amp;</span> <span class="se">\</span>
+<span class="hll">    --products MATLAB Parallel_Computing_Toolbox Mapping_Toolbox <span class="o">&amp;&amp;</span> <span class="se">\</span>
+</span>    rm -f mpm /tmp/mathworks_root.log <span class="o">&amp;&amp;</span> <span class="se">\</span>
     ln -s /opt/matlab/bin/matlab /usr/local/bin/matlab
 
 <span class="c"># Add &quot;matlab&quot; user and grant sudo permission.</span>

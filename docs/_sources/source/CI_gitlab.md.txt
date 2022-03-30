@@ -90,7 +90,10 @@ sudo nano Dockerfile
 and copy the content below in the Dockerfile. Make sure to update the Matlab release and installed addons to your requirements.
 
 
-```docker
+```{code-block} docker
+---
+emphasize-lines: 6, 28
+---
 # Copyright 2019 - 2021 The MathWorks, Inc.
 
 # To specify which MATLAB release to install in the container, edit the value of the MATLAB_RELEASE argument.
