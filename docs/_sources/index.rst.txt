@@ -18,12 +18,12 @@ Table of Contents
    
 
    source/intro
-   
+   source/CI_gitlab
    
 .. toctree::
    :caption: API references
    :hidden:
-   :maxdepth: 2
+   :maxdepth: 1
    
    source/src_python
    source/src_matlab
