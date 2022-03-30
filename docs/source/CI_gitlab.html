@@ -7,6 +7,7 @@
   <title>Continuous Integration with Matlab on TU Delft Gitlab &mdash; testbench  documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -15,6 +16,8 @@
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -171,10 +174,10 @@ gitlab/gitlab-runner:latest
 <section id="step-3-create-a-docker-image-containing-a-custom-matlab-installation">
 <h2>Step 3. Create a Docker image containing a custom Matlab installation<a class="headerlink" href="#step-3-create-a-docker-image-containing-a-custom-matlab-installation" title="Permalink to this headline"></a></h2>
 <p>In order for a Gitlab runner to execute Matlab code, it needs to be able to access a container with Matlab installed. The aim of this step is to create a Docker image with Matlab installation that can be used by a Gitlab runner.</p>
-<blockquote>
-<div><p><strong>Note</strong>
-We have looked into using the Docker images developed by <a class="reference external" href="https://hub.docker.com/r/mathworks">Mathworks</a>. When running these images, you are prompted to supply your Matlab’s account username and password to activate the instance. Although it is possible to create a new image from such an activated container and use it on the VPS, we have so far not been able to get this solution working with Gitlab runners. Additionally, by building our own Docker image, we can customize the installed toolboxes.</p>
-</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We have looked into using the Docker images developed by <a class="reference external" href="https://hub.docker.com/r/mathworks">Mathworks</a>. When running these images, you are prompted to supply your Matlab’s account username and password to activate the instance. Although it is possible to create a new image from such an activated container and use it on the VPS, we have so far not been able to get this solution working with Gitlab runners. Additionally, by building our own Docker image, we can customize the installed toolboxes.</p>
+</div>
 <p>This Dockerfile is based on Matlab’s <a class="reference external" href="https://github.com/mathworks-ref-arch/matlab-dockerfile">Dockerfile template</a>. We will make the following modifications to this template:</p>
 <ul class="simple">
 <li><p>set <code class="docutils literal notranslate"><span class="pre">bash</span></code> as the default run command (Gitlab runners need to access a shell)</p></li>
@@ -184,14 +187,14 @@ We have looked into using the Docker images developed by <a class="reference ext
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo nano Dockerfile
 </pre></div>
 </div>
-<p>and copy the content below in the Dockerfile. Make sure to update the Matlab release and installed addons to your requirements.</p>
+<p>and copy the content below in the Dockerfile. Make sure to update the Matlab release and installed addons to your requirements (see highlights).</p>
 <div class="highlight-docker notranslate"><div class="highlight"><pre><span></span><span class="c"># Copyright 2019 - 2021 The MathWorks, Inc.</span>
 
 <span class="c"># To specify which MATLAB release to install in the container, edit the value of the MATLAB_RELEASE argument.</span>
 <span class="c"># Use lower case to specify the release, for example: ARG MATLAB_RELEASE=r2020a</span>
-<span class="k">ARG</span><span class="w"> </span><span class="nv">MATLAB_RELEASE</span><span class="o">=</span>r2021b
-<span class="hll">
-</span><span class="c"># When you start the build stage, this Dockerfile by default uses the Ubuntu-based matlab-deps image.</span>
+<span class="hll"><span class="k">ARG</span><span class="w"> </span><span class="nv">MATLAB_RELEASE</span><span class="o">=</span>r2021b
+</span>
+<span class="c"># When you start the build stage, this Dockerfile by default uses the Ubuntu-based matlab-deps image.</span>
 <span class="c"># To check the available matlab-deps images, see: https://hub.docker.com/r/mathworks/matlab-deps</span>
 <span class="k">FROM</span><span class="w"> </span><span class="s">mathworks/matlab-deps:${MATLAB_RELEASE}</span>
 
@@ -244,16 +247,16 @@ We have looked into using the Docker images developed by <a class="reference ext
 </div>
 <p>In response to this command you will be prompted to answer a series of questions. You can find the required gitlab-ci token in your Gitlab repository under <code class="docutils literal notranslate"><span class="pre">Settings</span> <span class="pre">-&gt;</span> <span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Runners</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">gitlab</span><span class="o">-</span><span class="n">ci</span> <span class="n">coordinator</span> <span class="n">URL</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">gitlab</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="p">):</span>
-<span class="o">&gt;</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">gitlab</span><span class="o">.</span><span class="n">tudelft</span><span class="o">.</span><span class="n">nl</span>
-<span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">gitlab</span><span class="o">-</span><span class="n">ci</span> <span class="n">token</span> <span class="k">for</span> <span class="n">this</span> <span class="n">runner</span><span class="p">:</span>
-<span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">copied</span> <span class="kn">from</span> <span class="nn">your</span> <span class="n">repository</span> <span class="n">CI</span><span class="o">/</span><span class="n">CD</span> <span class="n">settings</span><span class="o">&gt;</span>
-<span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">gitlab</span><span class="o">-</span><span class="n">ci</span> <span class="n">description</span> <span class="k">for</span> <span class="n">this</span> <span class="n">runner</span><span class="p">:</span> <span class="p">(</span><span class="ow">or</span> <span class="n">hit</span> <span class="n">enter</span> <span class="n">to</span> <span class="n">skip</span><span class="p">)</span>
+<span class="hll"><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">gitlab</span><span class="o">.</span><span class="n">tudelft</span><span class="o">.</span><span class="n">nl</span>
+</span><span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">gitlab</span><span class="o">-</span><span class="n">ci</span> <span class="n">token</span> <span class="k">for</span> <span class="n">this</span> <span class="n">runner</span><span class="p">:</span>
+<span class="hll"><span class="o">&lt;</span><span class="n">your</span> <span class="n">repository</span> <span class="n">CI</span><span class="o">/</span><span class="n">CD</span> <span class="n">token</span><span class="o">&gt;</span>
+</span><span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">gitlab</span><span class="o">-</span><span class="n">ci</span> <span class="n">description</span> <span class="k">for</span> <span class="n">this</span> <span class="n">runner</span><span class="p">:</span> <span class="p">(</span><span class="ow">or</span> <span class="n">hit</span> <span class="n">enter</span> <span class="n">to</span> <span class="n">skip</span><span class="p">)</span>
 <span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">gitlab</span><span class="o">-</span><span class="n">ci</span> <span class="n">tags</span> <span class="k">for</span> <span class="n">this</span> <span class="n">runner</span> <span class="p">(</span><span class="n">comma</span> <span class="n">separated</span><span class="p">):</span> <span class="p">(</span><span class="ow">or</span> <span class="n">hit</span> <span class="n">enter</span> <span class="n">to</span> <span class="n">skip</span><span class="p">)</span>
 <span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">executor</span><span class="p">:</span> <span class="n">custom</span><span class="p">,</span> <span class="n">docker</span><span class="o">-</span><span class="n">ssh</span><span class="p">,</span> <span class="n">shell</span><span class="p">,</span> <span class="n">virtualbox</span><span class="p">,</span> <span class="n">docker</span><span class="o">+</span><span class="n">machine</span><span class="p">,</span> <span class="n">docker</span><span class="p">,</span> <span class="n">parallels</span><span class="p">,</span> <span class="n">ssh</span><span class="p">,</span> <span class="n">docker</span><span class="o">-</span><span class="n">ssh</span><span class="o">+</span><span class="n">machine</span><span class="p">,</span> <span class="n">kubernetes</span><span class="p">:</span>
-<span class="o">&gt;</span> <span class="n">docker</span>
-<span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">default</span> <span class="n">Docker</span> <span class="n">image</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span> <span class="n">ruby</span><span class="p">:</span><span class="mf">2.6</span><span class="p">):</span>
-<span class="o">&gt;</span> <span class="n">matlab</span><span class="o">-</span><span class="n">gitlab</span>
-
+<span class="hll"><span class="n">docker</span>
+</span><span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">default</span> <span class="n">Docker</span> <span class="n">image</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span> <span class="n">ruby</span><span class="p">:</span><span class="mf">2.6</span><span class="p">):</span>
+<span class="hll"><span class="n">matlab</span><span class="o">-</span><span class="n">gitlab</span>
+</span>
 <span class="n">Runner</span> <span class="n">registered</span> <span class="n">successfully</span><span class="o">.</span> <span class="n">Feel</span> <span class="n">free</span> <span class="n">to</span> <span class="n">start</span> <span class="n">it</span><span class="p">,</span> <span class="n">but</span> <span class="k">if</span> <span class="n">it</span><span class="s1">&#39;s running already the config should be automatically reloaded! </span>
 </pre></div>
 </div>
@@ -272,7 +275,13 @@ We have looked into using the Docker images developed by <a class="reference ext
 </pre></div>
 </div>
 <p>and change the settings for the runner <code class="docutils literal notranslate"><span class="pre">matlab-gitlab</span></code> with the changes above. The result should be:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[[</span><span class="n">runners</span><span class="p">]]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="n">concurrent</span> <span class="o">=</span> <span class="mi">4</span>
+</span><span class="n">check_interval</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="p">[</span><span class="n">session_server</span><span class="p">]</span>
+  <span class="n">session_timeout</span> <span class="o">=</span> <span class="mi">1800</span>
+
+<span class="p">[[</span><span class="n">runners</span><span class="p">]]</span>
   <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;matlab-gitlab&quot;</span>
   <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://gitlab.tudelft.nl&quot;</span>
   <span class="n">token</span> <span class="o">=</span> <span class="s2">&quot;&lt;token&gt;&quot;</span>
@@ -285,15 +294,15 @@ We have looked into using the Docker images developed by <a class="reference ext
   <span class="p">[</span><span class="n">runners</span><span class="o">.</span><span class="n">docker</span><span class="p">]</span>
     <span class="n">tls_verify</span> <span class="o">=</span> <span class="n">false</span>
     <span class="n">image</span> <span class="o">=</span> <span class="s2">&quot;matlab-gitlab:latest&quot;</span>
-    <span class="n">privileged</span> <span class="o">=</span> <span class="n">true</span>
-    <span class="n">disable_entrypoint_overwrite</span> <span class="o">=</span> <span class="n">false</span>
+<span class="hll">    <span class="n">privileged</span> <span class="o">=</span> <span class="n">true</span>
+</span>    <span class="n">disable_entrypoint_overwrite</span> <span class="o">=</span> <span class="n">false</span>
     <span class="n">oom_kill_disable</span> <span class="o">=</span> <span class="n">false</span>
     <span class="n">disable_cache</span> <span class="o">=</span> <span class="n">false</span>
     <span class="n">volumes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;/cache&quot;</span><span class="p">]</span>
     <span class="n">shm_size</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">pull_policy</span> <span class="o">=</span> <span class="s2">&quot;if-not-present&quot;</span>
-    <span class="n">cap_add</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;NET_ADMIN&quot;</span><span class="p">]</span>
-</pre></div>
+<span class="hll">    <span class="n">pull_policy</span> <span class="o">=</span> <span class="s2">&quot;if-not-present&quot;</span>
+</span><span class="hll">    <span class="n">cap_add</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;NET_ADMIN&quot;</span><span class="p">]</span>
+</span></pre></div>
 </div>
 <p>For the changes to take effect, restart the gitlab-runner with</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo docker restart gitlab-runner
@@ -301,7 +310,7 @@ We have looked into using the Docker images developed by <a class="reference ext
 </div>
 <p><strong>References</strong></p>
 <ul class="simple">
-<li><p>https://docs.gitlab.com/runner/install/docker.html</p></li>
+<li><p><a class="reference external" href="https://docs.gitlab.com/runner/install/docker.html">https://docs.gitlab.com/runner/install/docker.html</a></p></li>
 </ul>
 </section>
 <section id="step-6-obtain-a-matlab-license-file">
@@ -313,44 +322,51 @@ We have looked into using the Docker images developed by <a class="reference ext
 <li><p>Obtain your computer login name or username</p></li>
 <li><p>Activate the license through the License Center to obtain license file</p></li>
 </ol>
-<p><strong>1. Obtain your Host ID</strong>
-The Matlab license can only be activated for a specifc computer. In the Docker container, we will set the hostID of the container to <strong>0242ac11ffff</strong></p>
-<blockquote>
-<div><p>Docker automatically assigns an IP address to each running container, starting from 172.17.0.2 until 172.17.0.255. These IP addresses subsequently determine the container’s MAC address (see <a class="reference external" href="https://docs.gz.ro/modify-linux-hostid.html">here</a> for more details) to which the license is tied. To prevent the MAC address of the Matlab container from switching and thereby invalidating the license, we will set it to 02:42:ac:11:ff:ff when starting the Gitlab runner.</p>
-</div></blockquote>
-<p><strong>2. Obtain your computer login name or username</strong>
+<p><strong>1. Obtain your Host ID</strong><br />
+The Matlab license can only be activated for a specifc computer. In the Docker container, we will set the hostID of the container to <strong>0242ac11ffff</strong>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Docker automatically assigns an IP address to each running container, starting from 172.17.0.2 until 172.17.0.255. These IP addresses determine the container’s MAC address (see <a class="reference external" href="https://docs.gz.ro/modify-linux-hostid.html">here</a> for more details), which in turn needs to match with our license. To prevent the MAC address of the Matlab container from switching and thereby invalidating the license, we will set it to 02:42:ac:11:ff:ff in the <code class="docutils literal notranslate"><span class="pre">.gitlab-ci.yml</span></code> file.</p>
+</div>
+<p><strong>2. Obtain your computer login name or username</strong><br />
 The Matlab license is created for a specific user. In the Docker container, we will set the username to <strong>matlab</strong>.</p>
 <p><strong>3. Activate the license through the License Center to obtain license file</strong></p>
 <ol class="arabic simple">
-<li><p>Go to the License Center: https://www.mathworks.com/mwaccount</p></li>
+<li><p>Go to the License Center: <a class="reference external" href="https://www.mathworks.com/mwaccount">https://www.mathworks.com/mwaccount</a></p></li>
 <li><p>Under My Software, click the license number you want to activate. If you do not see your license number, in the bottom right hand corner, click View Additional Licenses or Trials.</p></li>
 <li><p>Click the Install and Activate tab</p></li>
 <li><p>Click Activate to Retrieve License File and/or Activate a Computer</p></li>
 <li><p>Enter the following information:</p>
 <ul class="simple">
-<li><p>the release you are activating = r2021b (same version as in the Dockerfile)</p></li>
-<li><p>the operating system = Linux</p></li>
-<li><p>the host ID = 0242ac11ffff</p></li>
-<li><p>your user or login name = matlab</p></li>
-<li><p>the Activation Label = matlab-gitlab</p></li>
+<li><p>the release you are activating = <strong>r2021b</strong> (same version as in the Dockerfile)</p></li>
+<li><p>the operating system = <strong>Linux</strong></p></li>
+<li><p>the host ID = <strong>0242ac11ffff</strong></p></li>
+<li><p>your user or login name = <strong>matlab</strong></p></li>
+<li><p>the Activation Label = <strong>matlab-gitlab</strong></p></li>
 </ul>
 </li>
 <li><p>Download the <code class="docutils literal notranslate"><span class="pre">license.lic</span></code> file</p></li>
 </ol>
 <p>References:</p>
 <ul class="simple">
-<li><p>https://nl.mathworks.com/matlabcentral/answers/259627-how-do-i-activate-matlab-or-other-mathworks-products-without-an-internet-connection</p></li>
+<li><p><a class="reference external" href="https://nl.mathworks.com/matlabcentral/answers/259627-how-do-i-activate-matlab-or-other-mathworks-products-without-an-internet-connection">https://nl.mathworks.com/matlabcentral/answers/259627-how-do-i-activate-matlab-or-other-mathworks-products-without-an-internet-connection</a></p></li>
 </ul>
 </section>
 <section id="step-7-configure-the-ci-cd-pipeline-on-gitlab">
 <h2>Step 7. Configure the CI/CD pipeline on Gitlab<a class="headerlink" href="#step-7-configure-the-ci-cd-pipeline-on-gitlab" title="Permalink to this headline"></a></h2>
 <p>Before we can run a CI job, we need to configure a few settings in our Gitlab repository</p>
-<ol class="arabic simple">
-<li><p><strong>Add tag to matlab runner.</strong><br />
-Under <code class="docutils literal notranslate"><span class="pre">Settings</span> <span class="pre">-&gt;</span> <span class="pre">CI/CD</span> <span class="pre">--&gt;</span> <span class="pre">Runners</span></code> we can find the available specific runners. Press the edit button on the matlab-gitlab runner and add the tag <code class="docutils literal notranslate"><span class="pre">matlab-gitlab</span></code>. With this, we can call more easily call this specific runner within our CI pipeline.</p></li>
-<li><p><strong>Add license as Variable</strong>
-Under <code class="docutils literal notranslate"><span class="pre">Settings</span> <span class="pre">-&gt;</span> <span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Variables</span></code> add a new variable called <code class="docutils literal notranslate"><span class="pre">MATLAB_LICENSE</span></code>, past the content of the downloaded <code class="docutils literal notranslate"><span class="pre">license.lic</span></code> file and set <code class="docutils literal notranslate"><span class="pre">type</span></code> to <code class="docutils literal notranslate"><span class="pre">file</span></code>. Having the license available as a Gitlab variable allows us to update it without having to change the Matlab image.</p></li>
-</ol>
+<p><strong>1. Add tag to matlab runner.</strong><br />
+Under <code class="docutils literal notranslate"><span class="pre">Settings</span> <span class="pre">-&gt;</span> <span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Runners</span></code> we can find the available specific runners. Press the edit button on the matlab-gitlab runner and add the tag <code class="docutils literal notranslate"><span class="pre">matlab-gitlab</span></code>. With this, we can call more easily call this specific runner within our CI pipeline.</p>
+<p><strong>2. Add license as Variable</strong><br />
+Under <code class="docutils literal notranslate"><span class="pre">Settings</span> <span class="pre">-&gt;</span> <span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Variables</span></code> add a new variable called <code class="docutils literal notranslate"><span class="pre">MATLAB_LICENSE</span></code>, past the content of the downloaded <code class="docutils literal notranslate"><span class="pre">license.lic</span></code> file and set <code class="docutils literal notranslate"><span class="pre">type</span></code> to <code class="docutils literal notranslate"><span class="pre">file</span></code>. Having the license available as a Gitlab variable allows us to update it without having to change the Matlab image.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Alternatively, we could have added the license file directly to the Docker image. With the license file in the same folder as the Dockerfile and adding the following command to the Dockerfile, we can activate the Matlab container:</p>
+<div class="highlight-docker notranslate"><div class="highlight"><pre><span></span><span class="k">COPY</span><span class="w"> </span>license.lic /opt/matlab/licenses/
+</pre></div>
+</div>
+<p>We opted to have it accessible through the Gitlab settings together with the accompanying hostid.</p>
+</div>
 </section>
 <section id="step-8-add-a-job-to-test-the-pipeline">
 <h2>Step 8. Add a job to test the pipeline<a class="headerlink" href="#step-8-add-a-job-to-test-the-pipeline" title="Permalink to this headline"></a></h2>
@@ -362,7 +378,7 @@ Under <code class="docutils literal notranslate"><span class="pre">Settings</spa
 <span class="w">  </span><span class="nt">tags</span><span class="p">:</span><span class="w"> </span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">matlab-gitlab</span><span class="w"></span>
 <span class="w">  </span><span class="nt">before_script</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="c1"># Change to mac-address to match the Matlab license</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Change the mac-address to match the Matlab license</span><span class="w"></span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sudo ifconfig eth0 hw ether &quot;$MAC_ADDRESS&quot;</span><span class="w"></span>
 
 <span class="w">    </span><span class="c1"># Add the Matlab license to the Matlab installation in the container</span><span class="w"></span>
