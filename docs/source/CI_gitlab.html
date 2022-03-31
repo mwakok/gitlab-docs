@@ -138,11 +138,11 @@
 </section>
 <section id="step-1-request-a-tu-delft-vps">
 <h2>Step 1. Request a TU Delft VPS<a class="headerlink" href="#step-1-request-a-tu-delft-vps" title="Permalink to this headline"></a></h2>
-<p>If work with TU Delft Gitlab instance and you want to implement CI/CD pipelines, then you need to install a Gitlab runner on your own. Runners are the agents that run the CI/CD jobs that come from GitLab. Currently, the TU Delft instance does not provide this feature out-of-the-box. Therefore, we need a separate (virtual) server to run the Gitlab runners and execute the jobs in the CI/CD pipeline.</p>
+<p>If you want to work with the TU Delft Gitlab instance and you want to implement CI/CD pipelines, then you need to install a Gitlab runner on your own. Runners are the agents that run the CI/CD jobs that come from GitLab. Currently, the TU Delft instance does not provide this feature out-of-the-box. Therefore, we need a separate (virtual) server to run the Gitlab runners and execute the jobs in the CI/CD pipeline.</p>
 <p>The TU Delft offers Virtual Private Servers (VPS) for researchers through the <a class="reference external" href="https://tudelft.topdesk.net/tas/public/ssp/content/serviceflow?unid=418c986f186d4934848dc2712039ed34">TopDesk selfservice portal</a>. If you don’t have a VPS already, please follow this guide to <a class="reference external" href="https://tu-delft-dcc.github.io/01_Computing/02_Working_with_servers/01_VPS_request.html">request a Virtual Private Server</a></p>
 <p><strong>VPS requirements</strong></p>
 <ul class="simple">
-<li><p>50Gb disk space (this example requires ~10 Gb for Matlab, but this depends on the installed addons)</p></li>
+<li><p>50Gb disk space (the Matlab installation in this guide requires ~10 Gb, but this depends on the installed addons)</p></li>
 </ul>
 </section>
 <section id="step-2-setting-up-gitlab-runners">
@@ -155,7 +155,11 @@
 </pre></div>
 </div>
 </li>
-<li><p>Verify installation with <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">docker</span> <span class="pre">--version</span></code></p></li>
+<li><p>Verify installation with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo docker --version
+</pre></div>
+</div>
+</li>
 <li><p><em>Optional: Move default storage location to larger drive</em><br />
 If the file space in the Docker Root directory is not adequate, we must relocate the Docker Root. Please consult this <a class="reference external" href="https://www.ibm.com/docs/en/z-logdata-analytics/5.1.0?topic=compose-relocating-docker-root-directory">guide for instructions</a>.</p></li>
 <li><p>Deploy the gitlab-runner with</p>
@@ -166,7 +170,11 @@ gitlab/gitlab-runner:latest
 </pre></div>
 </div>
 </li>
-<li><p>Verify deployment with <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">docker</span> <span class="pre">ps</span> <span class="pre">-a</span></code></p></li>
+<li><p>Verify deployment with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo docker ps -a
+</pre></div>
+</div>
+</li>
 </ol>
 </section>
 <section id="step-3-create-a-docker-image-containing-a-custom-matlab-installation">
@@ -318,7 +326,6 @@ gitlab/gitlab-runner:latest
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo docker restart gitlab-runner
 </pre></div>
 </div>
-<p><strong>References</strong></p>
 </section>
 <section id="step-6-obtain-a-matlab-license-file">
 <h2>Step 6. Obtain a Matlab license file<a class="headerlink" href="#step-6-obtain-a-matlab-license-file" title="Permalink to this headline"></a></h2>
@@ -358,7 +365,7 @@ The Matlab license is created for a specific user. In the Docker container, we w
 <section id="step-7-configure-the-ci-cd-pipeline-on-gitlab">
 <h2>Step 7. Configure the CI/CD pipeline on Gitlab<a class="headerlink" href="#step-7-configure-the-ci-cd-pipeline-on-gitlab" title="Permalink to this headline"></a></h2>
 <p>Before we can run a CI job, we need to configure a few settings in our Gitlab repository</p>
-<p><strong>1. Add tag to matlab runner.</strong><br />
+<p><strong>1. Add tag to matlab runner</strong><br />
 Under <code class="docutils literal notranslate"><span class="pre">Settings</span> <span class="pre">-&gt;</span> <span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Runners</span></code> we can find the available specific runners. Press the edit button on the matlab-gitlab runner and add the tag <code class="docutils literal notranslate"><span class="pre">matlab-gitlab</span></code>. With this, we can call more easily call this specific runner within our CI pipeline.</p>
 <p><strong>2. Add license as Variable</strong><br />
 Under <code class="docutils literal notranslate"><span class="pre">Settings</span> <span class="pre">-&gt;</span> <span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Variables</span></code> add a new variable called <code class="docutils literal notranslate"><span class="pre">MATLAB_LICENSE</span></code>, past the content of the downloaded <code class="docutils literal notranslate"><span class="pre">license.lic</span></code> file and set <code class="docutils literal notranslate"><span class="pre">type</span></code> to <code class="docutils literal notranslate"><span class="pre">file</span></code>. Having the license available as a Gitlab variable allows us to update it without having to change the Matlab image.</p>
