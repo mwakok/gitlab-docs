@@ -58,6 +58,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#step-6-obtain-a-matlab-license-file">Step 6. Obtain a Matlab license file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#step-7-configure-the-ci-cd-pipeline-on-gitlab">Step 7. Configure the CI/CD pipeline on Gitlab</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#step-8-add-a-job-to-test-the-pipeline">Step 8. Add a job to test the pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
 </ul>
 </li>
 </ul>
@@ -132,16 +133,16 @@
 <p><strong>Gitlab runner</strong> (from GitLab documentation)<br />
 <em>Runners are the agents that run the CI/CD jobs that come from GitLab. When you register a runner, you are setting up communication between your GitLab instance and the machine where GitLab Runner is installed. Runners usually process jobs on the same machine where you installed GitLab Runner.</em></p>
 <p><strong>Gitlab jobs</strong><br />
-<em>Pipeline configuration begins with jobs. Jobs are the most fundamental element of a <code class="docutils literal notranslate"><span class="pre">.gitlab-ci.yml</span></code> file. Each job is exectued by a Gitlab runner. See Gitlab documentation for more <a class="reference external" href="https://docs.gitlab.com/ee/ci/jobs/">info</a>.</em></p>
+<em>Pipeline configuration begins with jobs. Jobs are the most fundamental element of a <code class="docutils literal notranslate"><span class="pre">.gitlab-ci.yml</span></code> file. Each job is executed by a Gitlab runner. See Gitlab documentation for more <a class="reference external" href="https://docs.gitlab.com/ee/ci/jobs/">info</a>.</em></p>
 </section>
 </section>
 <section id="step-1-request-a-tu-delft-vps">
 <h2>Step 1. Request a TU Delft VPS<a class="headerlink" href="#step-1-request-a-tu-delft-vps" title="Permalink to this headline"></a></h2>
 <p>If work with TU Delft Gitlab instance and you want to implement CI/CD pipelines, then you need to install a Gitlab runner on your own. Runners are the agents that run the CI/CD jobs that come from GitLab. Currently, the TU Delft instance does not provide this feature out-of-the-box. Therefore, we need a separate (virtual) server to run the Gitlab runners and execute the jobs in the CI/CD pipeline.</p>
 <p>The TU Delft offers Virtual Private Servers (VPS) for researchers through the <a class="reference external" href="https://tudelft.topdesk.net/tas/public/ssp/content/serviceflow?unid=418c986f186d4934848dc2712039ed34">TopDesk selfservice portal</a>. If you don’t have a VPS already, please follow this guide to <a class="reference external" href="https://tu-delft-dcc.github.io/01_Computing/02_Working_with_servers/01_VPS_request.html">request a Virtual Private Server</a></p>
-<p>Needed options:</p>
+<p><strong>VPS requirements</strong></p>
 <ul class="simple">
-<li><p>100Gb disk space</p></li>
+<li><p>50Gb disk space (this example requires ~10 Gb for Matlab, but this depends on the installed addons)</p></li>
 </ul>
 </section>
 <section id="step-2-setting-up-gitlab-runners">
@@ -155,11 +156,8 @@
 </div>
 </li>
 <li><p>Verify installation with <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">docker</span> <span class="pre">--version</span></code></p></li>
-<li><p>Move default storage location to larger drive</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>TODO
-</pre></div>
-</div>
-</li>
+<li><p><em>Optional: Move default storage location to larger drive</em><br />
+If the file space in the Docker Root directory is not adequate, we must relocate the Docker Root. Please consult this <a class="reference external" href="https://www.ibm.com/docs/en/z-logdata-analytics/5.1.0?topic=compose-relocating-docker-root-directory">guide for instructions</a>.</p></li>
 <li><p>Deploy the gitlab-runner with</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker run -d --name gitlab-runner --restart always <span class="se">\</span>
 -v /srv/gitlab-runner/config:/etc/gitlab-runner <span class="se">\</span>
@@ -173,10 +171,10 @@ gitlab/gitlab-runner:latest
 </section>
 <section id="step-3-create-a-docker-image-containing-a-custom-matlab-installation">
 <h2>Step 3. Create a Docker image containing a custom Matlab installation<a class="headerlink" href="#step-3-create-a-docker-image-containing-a-custom-matlab-installation" title="Permalink to this headline"></a></h2>
-<p>In order for a Gitlab runner to execute Matlab code, it needs to be able to access a container with Matlab installed. The aim of this step is to create a Docker image with Matlab installation that can be used by a Gitlab runner.</p>
+<p>In order for a Gitlab runner to execute Matlab code, it needs to be able to access a container with Matlab installed. The aim of this step is to create a Docker image with Matlab installation that can be used by a Gitlab runner. By building our own Docker image, we can specify the Matlab version and customize the installed toolboxes.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>We have looked into using the Docker images developed by <a class="reference external" href="https://hub.docker.com/r/mathworks">Mathworks</a>. When running these images, you are prompted to supply your Matlab’s account username and password to activate the instance. Although it is possible to create a new image from such an activated container and use it on the VPS, we have so far not been able to get this solution working with Gitlab runners. Additionally, by building our own Docker image, we can customize the installed toolboxes.</p>
+<p>We have looked into using the Docker images developed by <a class="reference external" href="https://hub.docker.com/r/mathworks">Mathworks</a>. When running these images, you are prompted to supply your Matlab’s account username and password to activate the instance. Although it is possible to create a new image from such an activated container and use it on the VPS, we have so far not been able to get this solution working with Gitlab runners. We thus rely on downloading a license file (step 6) and storing it as a Variable on Gitlab (step 7).</p>
 </div>
 <p>This Dockerfile is based on Matlab’s <a class="reference external" href="https://github.com/mathworks-ref-arch/matlab-dockerfile">Dockerfile template</a>. We will make the following modifications to this template:</p>
 <ul class="simple">
@@ -238,6 +236,14 @@ gitlab/gitlab-runner:latest
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo docker images
 </pre></div>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Optionally, you can <a class="reference external" href="https://docs.docker.com/engine/reference/commandline/push/">upload your Docker image to Dockerhub</a> and have it available from there.</p>
+</div>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Don’t share any Docker images that contain license files or other confidential information.</p>
+</div>
 </section>
 <section id="step-4-register-the-matlab-runner">
 <h2>Step 4. Register the Matlab runner<a class="headerlink" href="#step-4-register-the-matlab-runner" title="Permalink to this headline"></a></h2>
@@ -268,8 +274,12 @@ gitlab/gitlab-runner:latest
 <li><p>Set option <code class="docutils literal notranslate"><span class="pre">privileged</span> <span class="pre">=</span> <span class="pre">true</span></code></p></li>
 <li><p>Add option <code class="docutils literal notranslate"><span class="pre">pull_policy</span> <span class="pre">=</span> <span class="pre">&quot;if-not-present&quot;</span></code></p></li>
 <li><p>Add option <code class="docutils literal notranslate"><span class="pre">cap_add</span> <span class="pre">=</span> <span class="pre">[&quot;NET_ADMIN&quot;]</span></code></p></li>
-<li><p>Optional: set <code class="docutils literal notranslate"><span class="pre">concurrent</span> <span class="pre">=</span> <span class="pre">4</span></code> (line 1) to run up to four jobs simultaneously</p></li>
+<li><p>Optional: set <code class="docutils literal notranslate"><span class="pre">concurrent</span> <span class="pre">=</span> <span class="pre">4</span></code> to run up to four jobs simultaneously</p></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you have pushed the Docker image to DockerHub, you can ignore the <code class="docutils literal notranslate"><span class="pre">pull_policy</span> <span class="pre">=</span> <span class="pre">&quot;if-not-present&quot;</span></code> parameter as we can pull the image from DockerHub.</p>
+</div>
 <p>To modify the file, run</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo nano /srv/gitlab-runner/config/config.toml
 </pre></div>
@@ -309,9 +319,6 @@ gitlab/gitlab-runner:latest
 </pre></div>
 </div>
 <p><strong>References</strong></p>
-<ul class="simple">
-<li><p><a class="reference external" href="https://docs.gitlab.com/runner/install/docker.html">https://docs.gitlab.com/runner/install/docker.html</a></p></li>
-</ul>
 </section>
 <section id="step-6-obtain-a-matlab-license-file">
 <h2>Step 6. Obtain a Matlab license file<a class="headerlink" href="#step-6-obtain-a-matlab-license-file" title="Permalink to this headline"></a></h2>
@@ -347,10 +354,6 @@ The Matlab license is created for a specific user. In the Docker container, we w
 </li>
 <li><p>Download the <code class="docutils literal notranslate"><span class="pre">license.lic</span></code> file</p></li>
 </ol>
-<p>References:</p>
-<ul class="simple">
-<li><p><a class="reference external" href="https://nl.mathworks.com/matlabcentral/answers/259627-how-do-i-activate-matlab-or-other-mathworks-products-without-an-internet-connection">https://nl.mathworks.com/matlabcentral/answers/259627-how-do-i-activate-matlab-or-other-mathworks-products-without-an-internet-connection</a></p></li>
-</ul>
 </section>
 <section id="step-7-configure-the-ci-cd-pipeline-on-gitlab">
 <h2>Step 7. Configure the CI/CD pipeline on Gitlab<a class="headerlink" href="#step-7-configure-the-ci-cd-pipeline-on-gitlab" title="Permalink to this headline"></a></h2>
@@ -361,11 +364,15 @@ Under <code class="docutils literal notranslate"><span class="pre">Settings</spa
 Under <code class="docutils literal notranslate"><span class="pre">Settings</span> <span class="pre">-&gt;</span> <span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Variables</span></code> add a new variable called <code class="docutils literal notranslate"><span class="pre">MATLAB_LICENSE</span></code>, past the content of the downloaded <code class="docutils literal notranslate"><span class="pre">license.lic</span></code> file and set <code class="docutils literal notranslate"><span class="pre">type</span></code> to <code class="docutils literal notranslate"><span class="pre">file</span></code>. Having the license available as a Gitlab variable allows us to update it without having to change the Matlab image.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Alternatively, we could have added the license file directly to the Docker image. With the license file in the same folder as the Dockerfile and adding the following command to the Dockerfile, we can activate the Matlab container:</p>
+<p>Alternatively, we could have added the license file directly to the Docker image. With the license file in the same folder as the Dockerfile and adding the following command to the Dockerfile, we can build a Docker image with an activated Matlab:</p>
 <div class="highlight-docker notranslate"><div class="highlight"><pre><span></span><span class="k">COPY</span><span class="w"> </span>license.lic /opt/matlab/licenses/
 </pre></div>
 </div>
-<p>We opted to have it accessible through the Gitlab settings together with the accompanying hostid.</p>
+<p>Here, we opted to have it accessible through the Gitlab settings together with the accompanying hostid.</p>
+</div>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Don’t share any Docker images that contain license files or other confidential information.</p>
 </div>
 </section>
 <section id="step-8-add-a-job-to-test-the-pipeline">
@@ -391,6 +398,13 @@ Under <code class="docutils literal notranslate"><span class="pre">Settings</spa
 </div>
 <p>After commiting, the pipeline should run and execute the job <code class="docutils literal notranslate"><span class="pre">check_matlab</span></code>. You can check the status of the pipeline via <code class="docutils literal notranslate"><span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Pipelines</span></code>.</p>
 <p>If all went well, you have successfully setup a Gitlab runner to run Matlab code. Congrats!</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this headline"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://nl.mathworks.com/matlabcentral/answers/259627-how-do-i-activate-matlab-or-other-mathworks-products-without-an-internet-connection">Activating Matlab without an internet connection</a></p></li>
+<li><p><a class="reference external" href="https://docs.gitlab.com/runner/install/docker.html">Run GitLab Runner in a container</a></p></li>
+</ul>
 </section>
 </section>
 
