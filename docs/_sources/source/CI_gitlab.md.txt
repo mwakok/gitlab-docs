@@ -20,7 +20,6 @@ With this guide, you will create a Continuous Integration Pipeline on a reposito
 1. Set up a Gitlab runner (on the VPS)
 1. Create a Docker image with a custom Matlab installation (on the VPS)
 1. Register a gitlab runner for the Matlab container (on the VPS)
-1. Update Matlab runner configuration (on the VPS)
 1. Obtain a Matlab license file
 1. Configure the CI/CD pipeline
 1. Add a job to test the pipeline
@@ -39,6 +38,8 @@ _Runners are the agents that run the CI/CD jobs that come from GitLab. When you 
 **Gitlab jobs**  
 _Pipeline configuration begins with jobs. Jobs are the most fundamental element of a `.gitlab-ci.yml` file. Each job is executed by a Gitlab runner. See Gitlab documentation for more [info](https://docs.gitlab.com/ee/ci/jobs/)._
 
+**CI variables**   
+_Variables store information, like passwords and secret keys, that you can use in job scripts. [Learn more](https://gitlab.tudelft.nl/help/ci/variables/index)._
 
 ## Step 1. Request a TU Delft VPS
 If you want to work with the TU Delft Gitlab instance and you want to implement CI/CD pipelines, then you need to install a Gitlab runner on your own. Runners are the agents that run the CI/CD jobs that come from GitLab. Currently, the TU Delft instance does not provide this feature out-of-the-box. Therefore, we need a separate (virtual) server to run the Gitlab runners and execute the jobs in the CI/CD pipeline.
@@ -162,82 +163,20 @@ Don't share any Docker images that contain license files or other confidential i
 ```
 
 ## Step 4. Register the Matlab runner
-After deploying the gitlab-runner in step 2, we need to register a new runner for our `matlab-gitlab` image. Run the following command to register your runner and configure it to deploy in a Docker container on your server.
+After deploying the gitlab-runner in step 2, we need to register a new runner for our `matlab-gitlab:latest` image. Run the command below to register your runner and configure it to deploy in a Docker container on your server. You will need to provide the registration token from your repository, which you can find under **Settings > CI/CD > Runners**.
 
 ```{code-block} bash
-docker run --rm -it -v /srv/gitlab-runner/config:/etc/gitlab-runner gitlab/gitlab-runner register
-```
-
-In response to this command you will be prompted to answer a series of questions. You can find the required gitlab-ci token in your Gitlab repository under `Settings -> CI/CD -> Runners`:
-
-
-```{code-block}
----
-emphasize-lines: 2, 4, 8, 10
----
-Please enter the gitlab-ci coordinator URL (e.g. https://gitlab.com/):
-https://gitlab.tudelft.nl
-Please enter the gitlab-ci token for this runner:
-<your repository CI/CD token>
-Please enter the gitlab-ci description for this runner: (or hit enter to skip)
-Please enter the gitlab-ci tags for this runner (comma separated): (or hit enter to skip)
-Please enter the executor: custom, docker-ssh, shell, virtualbox, docker+machine, docker, parallels, ssh, docker-ssh+machine, kubernetes:
-docker
-Please enter the default Docker image (e.g. ruby:2.6):
-matlab-gitlab
-
-Runner registered successfully. Feel free to start it, but if it's running already the config should be automatically reloaded! 
-```
-
-## Step 5. Update Matlab runner configuration
-
-The runner configurations are stored in `/srv/gitlab-runner/config/config.toml`. To configure the Matlab runner, we need to update the config file with the following changes:
-- Set option `privileged = true`
-- Add option `pull_policy = "if-not-present"`
-- Add option `cap_add = ["NET_ADMIN"]`
-- Optional: set `concurrent = 4` to run up to four jobs simultaneously
-
-```{note}
-If you have pushed the Docker image to DockerHub, you can ignore the `pull_policy = "if-not-present"` parameter as we can pull the image from DockerHub.
-```
-
-To modify the file, run
-```bash
-sudo nano /srv/gitlab-runner/config/config.toml
-```
-and change the settings for the runner `matlab-gitlab` with the changes above. The result should be:
-
-```{code-block}
----
-emphasize-lines: 1, 20, 26, 27
----
-concurrent = 4
-check_interval = 0
-
-[session_server]
-  session_timeout = 1800
-
-[[runners]]
-  name = "matlab-gitlab"
-  url = "https://gitlab.tudelft.nl"
-  token = "<token>"
-  executor = "docker"
-  [runners.custom_build_dir]
-  [runners.cache]
-    [runners.cache.s3]
-    [runners.cache.gcs]
-    [runners.cache.azure]
-  [runners.docker]
-    tls_verify = false
-    image = "matlab-gitlab:latest"
-    privileged = true
-    disable_entrypoint_overwrite = false
-    oom_kill_disable = false
-    disable_cache = false
-    volumes = ["/cache"]
-    shm_size = 0
-    pull_policy = "if-not-present"
-    cap_add = ["NET_ADMIN"]
+sudo docker run --rm -it -v /srv/gitlab-runner/config:/etc/gitlab-runner gitlab/gitlab-runner register \
+  --non-interactive \
+  --url "https://gitlab.tudelft.nl/" \
+  --registration-token "REPOSITORY_TOKEN" \
+  --executor "docker" \
+  --docker-image matlab-gitlab:latest \
+  --description "matlab-runner" \
+  --tag-list "matlab" \
+  --docker-privileged=true \
+  --docker-cap-add "NET_ADMIN" \
+  --docker-pull-policy "if-not-present" \
 ```
 
 For the changes to take effect, restart the gitlab-runner with
@@ -246,7 +185,10 @@ For the changes to take effect, restart the gitlab-runner with
 sudo docker restart gitlab-runner
 ```
 
-## Step 6. Obtain a Matlab license file
+You should now see this runner in your repository under **Settings > CI/CD > Runner > Available specific runners**.
+
+
+## Step 5. Obtain a Matlab license file
 Every TU Delft employee has access to an Individual Matlab license. Normally, you would activate Matlab only once after installation through an online activation step. However, this does not work for a Docker container as it is relaunched for each CI trigger. 
 
 The following steps for activating Matlab on an offline machine are adapted from the [Matlab Forum](https://nl.mathworks.com/matlabcentral/answers/259627-how-do-i-activate-matlab-or-other-mathworks-products-without-an-internet-connection):
@@ -279,14 +221,10 @@ The Matlab license is created for a specific user. In the Docker container, we w
 1. Download the `license.lic` file 
 
 
-## Step 7. Configure the CI/CD pipeline on Gitlab
-Before we can run a CI job, we need to configure a few settings in our Gitlab repository
+## Step 6. Configure the CI/CD pipeline on Gitlab
+Before we can run a CI job, we need to add our license as a CI Variable in our Gitlab repository
 
-**1. Add tag to matlab runner**    
-    Under `Settings -> CI/CD -> Runners` we can find the available specific runners. Press the edit button on the matlab-gitlab runner and add the tag `matlab-gitlab`. With this, we can call more easily call this specific runner within our CI pipeline.
-
-**2. Add license as Variable**  
-    Under `Settings -> CI/CD -> Variables` add a new variable called `MATLAB_LICENSE`, past the content of the downloaded `license.lic` file and set `type` to `file`. Having the license available as a Gitlab variable allows us to update it without having to change the Matlab image.
+Under **Settings > CI/CD > Variables** add a new variable called `MATLAB_LICENSE`, paste the content of the downloaded `license.lic` file and set `type` to `file`. Having the license available as a Gitlab variable allows us to update it without having to change the Matlab image.
 
 ````{note}
 Alternatively, we could have added the license file directly to the Docker image. With the license file in the same folder as the Dockerfile and adding the following command to the Dockerfile, we can build a Docker image with an activated Matlab:
@@ -301,8 +239,8 @@ Here, we opted to have it accessible through the Gitlab settings together with t
 Don't share any Docker images that contain license files or other confidential information.
 ```
 
-## Step 8. Add a job to test the pipeline
-To test the pipeline, add the following content to `.gitlab-ci.yml` via `CI/CD -> Editor` in your repository. 
+## Step 7. Add a job to test the pipeline
+To test the pipeline, add the following content to `.gitlab-ci.yml` via **CI/CD > Editor** in your repository. 
 
 ```{code-block} yaml
 variables:
@@ -320,7 +258,7 @@ check_matlab:
     - sudo mv ${MATLAB_LICENSE} /opt/matlab/licenses/license.lic   
   script:    
     # Run a Matlab function/script through the -batch argument
-    - matlab -batch "magic(2)"
+    - matlab -batch "disp('hello world')"
 ```
 After commiting, the pipeline should run and execute the job `check_matlab`. You can check the status of the pipeline via `CI/CD -> Pipelines`.
 
