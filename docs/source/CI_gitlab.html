@@ -54,9 +54,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#step-2-setting-up-gitlab-runners">Step 2. Setting up Gitlab runners</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#step-3-create-a-docker-image-containing-a-custom-matlab-installation">Step 3. Create a Docker image containing a custom Matlab installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#step-4-register-the-matlab-runner">Step 4. Register the Matlab runner</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#step-5-obtain-a-matlab-license-file">Step 5. Obtain a Matlab license file</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#step-6-configure-the-ci-cd-pipeline-on-gitlab">Step 6. Configure the CI/CD pipeline on Gitlab</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#step-7-add-a-job-to-test-the-pipeline">Step 7. Add a job to test the pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-5-update-matlab-runner-configuration">Step 5. Update Matlab runner configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-6-obtain-a-matlab-license-file">Step 6. Obtain a Matlab license file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-7-configure-the-ci-cd-pipeline-on-gitlab">Step 7. Configure the CI/CD pipeline on Gitlab</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-8-add-a-job-to-test-the-pipeline">Step 8. Add a job to test the pipeline</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
 </ul>
 </li>
@@ -117,6 +118,7 @@
 <li><p>Set up a Gitlab runner (on the VPS)</p></li>
 <li><p>Create a Docker image with a custom Matlab installation (on the VPS)</p></li>
 <li><p>Register a gitlab runner for the Matlab container (on the VPS)</p></li>
+<li><p>Update Matlab runner configuration (on the VPS)</p></li>
 <li><p>Obtain a Matlab license file</p></li>
 <li><p>Configure the CI/CD pipeline</p></li>
 <li><p>Add a job to test the pipeline</p></li>
@@ -132,8 +134,6 @@
 <em>Runners are the agents that run the CI/CD jobs that come from GitLab. When you register a runner, you are setting up communication between your GitLab instance and the machine where GitLab Runner is installed. Runners usually process jobs on the same machine where you installed GitLab Runner.</em></p>
 <p><strong>Gitlab jobs</strong><br />
 <em>Pipeline configuration begins with jobs. Jobs are the most fundamental element of a <code class="docutils literal notranslate"><span class="pre">.gitlab-ci.yml</span></code> file. Each job is executed by a Gitlab runner. See Gitlab documentation for more <a class="reference external" href="https://docs.gitlab.com/ee/ci/jobs/">info</a>.</em></p>
-<p><strong>CI variables</strong><br />
-<em>Variables store information, like passwords and secret keys, that you can use in job scripts. <a class="reference external" href="https://gitlab.tudelft.nl/help/ci/variables/index">Learn more</a>.</em></p>
 </section>
 </section>
 <section id="step-1-request-a-tu-delft-vps">
@@ -255,28 +255,80 @@ gitlab/gitlab-runner:latest
 </section>
 <section id="step-4-register-the-matlab-runner">
 <h2>Step 4. Register the Matlab runner<a class="headerlink" href="#step-4-register-the-matlab-runner" title="Permalink to this headline"></a></h2>
-<p>After deploying the gitlab-runner in step 2, we need to register a new runner for our <code class="docutils literal notranslate"><span class="pre">matlab-gitlab:latest</span></code> image. Run the command below to register your runner and configure it to deploy in a Docker container on your server. You will need to provide the registration token from your repository, which you can find under <strong>Settings &gt; CI/CD &gt; Runners</strong>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo docker run --rm -it -v /srv/gitlab-runner/config:/etc/gitlab-runner gitlab/gitlab-runner register <span class="se">\</span>
-  --non-interactive <span class="se">\</span>
-  --url <span class="s2">&quot;https://gitlab.tudelft.nl/&quot;</span> <span class="se">\</span>
-  --registration-token <span class="s2">&quot;REPOSITORY_TOKEN&quot;</span> <span class="se">\</span>
-  --executor <span class="s2">&quot;docker&quot;</span> <span class="se">\</span>
-  --docker-image matlab-gitlab:latest <span class="se">\</span>
-  --description <span class="s2">&quot;matlab-runner&quot;</span> <span class="se">\</span>
-  --tag-list <span class="s2">&quot;matlab&quot;</span> <span class="se">\</span>
-  --docker-privileged<span class="o">=</span><span class="nb">true</span> <span class="se">\</span>
-  --docker-cap-add <span class="s2">&quot;NET_ADMIN&quot;</span> <span class="se">\</span>
-  --docker-pull-policy <span class="s2">&quot;if-not-present&quot;</span> <span class="se">\</span>
+<p>After deploying the gitlab-runner in step 2, we need to register a new runner for our <code class="docutils literal notranslate"><span class="pre">matlab-gitlab</span></code> image. Run the following command to register your runner and configure it to deploy in a Docker container on your server.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker run --rm -it -v /srv/gitlab-runner/config:/etc/gitlab-runner gitlab/gitlab-runner register
 </pre></div>
+</div>
+<p>In response to this command you will be prompted to answer a series of questions. You can find the required gitlab-ci token in your Gitlab repository under <code class="docutils literal notranslate"><span class="pre">Settings</span> <span class="pre">-&gt;</span> <span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Runners</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">gitlab</span><span class="o">-</span><span class="n">ci</span> <span class="n">coordinator</span> <span class="n">URL</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">gitlab</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="p">):</span>
+<span class="hll"><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">gitlab</span><span class="o">.</span><span class="n">tudelft</span><span class="o">.</span><span class="n">nl</span>
+</span><span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">gitlab</span><span class="o">-</span><span class="n">ci</span> <span class="n">token</span> <span class="k">for</span> <span class="n">this</span> <span class="n">runner</span><span class="p">:</span>
+<span class="hll"><span class="o">&lt;</span><span class="n">your</span> <span class="n">repository</span> <span class="n">CI</span><span class="o">/</span><span class="n">CD</span> <span class="n">token</span><span class="o">&gt;</span>
+</span><span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">gitlab</span><span class="o">-</span><span class="n">ci</span> <span class="n">description</span> <span class="k">for</span> <span class="n">this</span> <span class="n">runner</span><span class="p">:</span> <span class="p">(</span><span class="ow">or</span> <span class="n">hit</span> <span class="n">enter</span> <span class="n">to</span> <span class="n">skip</span><span class="p">)</span>
+<span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">gitlab</span><span class="o">-</span><span class="n">ci</span> <span class="n">tags</span> <span class="k">for</span> <span class="n">this</span> <span class="n">runner</span> <span class="p">(</span><span class="n">comma</span> <span class="n">separated</span><span class="p">):</span> <span class="p">(</span><span class="ow">or</span> <span class="n">hit</span> <span class="n">enter</span> <span class="n">to</span> <span class="n">skip</span><span class="p">)</span>
+<span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">executor</span><span class="p">:</span> <span class="n">custom</span><span class="p">,</span> <span class="n">docker</span><span class="o">-</span><span class="n">ssh</span><span class="p">,</span> <span class="n">shell</span><span class="p">,</span> <span class="n">virtualbox</span><span class="p">,</span> <span class="n">docker</span><span class="o">+</span><span class="n">machine</span><span class="p">,</span> <span class="n">docker</span><span class="p">,</span> <span class="n">parallels</span><span class="p">,</span> <span class="n">ssh</span><span class="p">,</span> <span class="n">docker</span><span class="o">-</span><span class="n">ssh</span><span class="o">+</span><span class="n">machine</span><span class="p">,</span> <span class="n">kubernetes</span><span class="p">:</span>
+<span class="hll"><span class="n">docker</span>
+</span><span class="n">Please</span> <span class="n">enter</span> <span class="n">the</span> <span class="n">default</span> <span class="n">Docker</span> <span class="n">image</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span> <span class="n">ruby</span><span class="p">:</span><span class="mf">2.6</span><span class="p">):</span>
+<span class="hll"><span class="n">matlab</span><span class="o">-</span><span class="n">gitlab</span>
+</span>
+<span class="n">Runner</span> <span class="n">registered</span> <span class="n">successfully</span><span class="o">.</span> <span class="n">Feel</span> <span class="n">free</span> <span class="n">to</span> <span class="n">start</span> <span class="n">it</span><span class="p">,</span> <span class="n">but</span> <span class="k">if</span> <span class="n">it</span><span class="s1">&#39;s running already the config should be automatically reloaded! </span>
+</pre></div>
+</div>
+</section>
+<section id="step-5-update-matlab-runner-configuration">
+<h2>Step 5. Update Matlab runner configuration<a class="headerlink" href="#step-5-update-matlab-runner-configuration" title="Permalink to this headline"></a></h2>
+<p>The runner configurations are stored in <code class="docutils literal notranslate"><span class="pre">/srv/gitlab-runner/config/config.toml</span></code>. To configure the Matlab runner, we need to update the config file with the following changes:</p>
+<ul class="simple">
+<li><p>Set option <code class="docutils literal notranslate"><span class="pre">privileged</span> <span class="pre">=</span> <span class="pre">true</span></code></p></li>
+<li><p>Add option <code class="docutils literal notranslate"><span class="pre">pull_policy</span> <span class="pre">=</span> <span class="pre">&quot;if-not-present&quot;</span></code></p></li>
+<li><p>Add option <code class="docutils literal notranslate"><span class="pre">cap_add</span> <span class="pre">=</span> <span class="pre">[&quot;NET_ADMIN&quot;]</span></code></p></li>
+<li><p>Optional: set <code class="docutils literal notranslate"><span class="pre">concurrent</span> <span class="pre">=</span> <span class="pre">4</span></code> to run up to four jobs simultaneously</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you have pushed the Docker image to DockerHub, you can ignore the <code class="docutils literal notranslate"><span class="pre">pull_policy</span> <span class="pre">=</span> <span class="pre">&quot;if-not-present&quot;</span></code> parameter as we can pull the image from DockerHub.</p>
+</div>
+<p>To modify the file, run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo nano /srv/gitlab-runner/config/config.toml
+</pre></div>
+</div>
+<p>and change the settings for the runner <code class="docutils literal notranslate"><span class="pre">matlab-gitlab</span></code> with the changes above. The result should be:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="n">concurrent</span> <span class="o">=</span> <span class="mi">4</span>
+</span><span class="n">check_interval</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="p">[</span><span class="n">session_server</span><span class="p">]</span>
+  <span class="n">session_timeout</span> <span class="o">=</span> <span class="mi">1800</span>
+
+<span class="p">[[</span><span class="n">runners</span><span class="p">]]</span>
+  <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;matlab-gitlab&quot;</span>
+  <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://gitlab.tudelft.nl&quot;</span>
+  <span class="n">token</span> <span class="o">=</span> <span class="s2">&quot;&lt;token&gt;&quot;</span>
+  <span class="n">executor</span> <span class="o">=</span> <span class="s2">&quot;docker&quot;</span>
+  <span class="p">[</span><span class="n">runners</span><span class="o">.</span><span class="n">custom_build_dir</span><span class="p">]</span>
+  <span class="p">[</span><span class="n">runners</span><span class="o">.</span><span class="n">cache</span><span class="p">]</span>
+    <span class="p">[</span><span class="n">runners</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">s3</span><span class="p">]</span>
+    <span class="p">[</span><span class="n">runners</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">gcs</span><span class="p">]</span>
+    <span class="p">[</span><span class="n">runners</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">azure</span><span class="p">]</span>
+  <span class="p">[</span><span class="n">runners</span><span class="o">.</span><span class="n">docker</span><span class="p">]</span>
+    <span class="n">tls_verify</span> <span class="o">=</span> <span class="n">false</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="s2">&quot;matlab-gitlab:latest&quot;</span>
+<span class="hll">    <span class="n">privileged</span> <span class="o">=</span> <span class="n">true</span>
+</span>    <span class="n">disable_entrypoint_overwrite</span> <span class="o">=</span> <span class="n">false</span>
+    <span class="n">oom_kill_disable</span> <span class="o">=</span> <span class="n">false</span>
+    <span class="n">disable_cache</span> <span class="o">=</span> <span class="n">false</span>
+    <span class="n">volumes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;/cache&quot;</span><span class="p">]</span>
+    <span class="n">shm_size</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="hll">    <span class="n">pull_policy</span> <span class="o">=</span> <span class="s2">&quot;if-not-present&quot;</span>
+</span><span class="hll">    <span class="n">cap_add</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;NET_ADMIN&quot;</span><span class="p">]</span>
+</span></pre></div>
 </div>
 <p>For the changes to take effect, restart the gitlab-runner with</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo docker restart gitlab-runner
 </pre></div>
 </div>
-<p>You should now see this runner in your repository under <strong>Settings &gt; CI/CD &gt; Runner &gt; Available specific runners</strong>.</p>
 </section>
-<section id="step-5-obtain-a-matlab-license-file">
-<h2>Step 5. Obtain a Matlab license file<a class="headerlink" href="#step-5-obtain-a-matlab-license-file" title="Permalink to this headline"></a></h2>
+<section id="step-6-obtain-a-matlab-license-file">
+<h2>Step 6. Obtain a Matlab license file<a class="headerlink" href="#step-6-obtain-a-matlab-license-file" title="Permalink to this headline"></a></h2>
 <p>Every TU Delft employee has access to an Individual Matlab license. Normally, you would activate Matlab only once after installation through an online activation step. However, this does not work for a Docker container as it is relaunched for each CI trigger.</p>
 <p>The following steps for activating Matlab on an offline machine are adapted from the <a class="reference external" href="https://nl.mathworks.com/matlabcentral/answers/259627-how-do-i-activate-matlab-or-other-mathworks-products-without-an-internet-connection">Matlab Forum</a>:</p>
 <ol class="arabic simple">
@@ -310,10 +362,13 @@ The Matlab license is created for a specific user. In the Docker container, we w
 <li><p>Download the <code class="docutils literal notranslate"><span class="pre">license.lic</span></code> file</p></li>
 </ol>
 </section>
-<section id="step-6-configure-the-ci-cd-pipeline-on-gitlab">
-<h2>Step 6. Configure the CI/CD pipeline on Gitlab<a class="headerlink" href="#step-6-configure-the-ci-cd-pipeline-on-gitlab" title="Permalink to this headline"></a></h2>
-<p>Before we can run a CI job, we need to add our license as a CI Variable in our Gitlab repository</p>
-<p>Under <strong>Settings &gt; CI/CD &gt; Variables</strong> add a new variable called <code class="docutils literal notranslate"><span class="pre">MATLAB_LICENSE</span></code>, paste the content of the downloaded <code class="docutils literal notranslate"><span class="pre">license.lic</span></code> file and set <code class="docutils literal notranslate"><span class="pre">type</span></code> to <code class="docutils literal notranslate"><span class="pre">file</span></code>. Having the license available as a Gitlab variable allows us to update it without having to change the Matlab image.</p>
+<section id="step-7-configure-the-ci-cd-pipeline-on-gitlab">
+<h2>Step 7. Configure the CI/CD pipeline on Gitlab<a class="headerlink" href="#step-7-configure-the-ci-cd-pipeline-on-gitlab" title="Permalink to this headline"></a></h2>
+<p>Before we can run a CI job, we need to configure a few settings in our Gitlab repository</p>
+<p><strong>1. Add tag to matlab runner</strong><br />
+Under <code class="docutils literal notranslate"><span class="pre">Settings</span> <span class="pre">-&gt;</span> <span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Runners</span></code> we can find the available specific runners. Press the edit button on the matlab-gitlab runner and add the tag <code class="docutils literal notranslate"><span class="pre">matlab-gitlab</span></code>. With this, we can call more easily call this specific runner within our CI pipeline.</p>
+<p><strong>2. Add license as Variable</strong><br />
+Under <code class="docutils literal notranslate"><span class="pre">Settings</span> <span class="pre">-&gt;</span> <span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Variables</span></code> add a new variable called <code class="docutils literal notranslate"><span class="pre">MATLAB_LICENSE</span></code>, past the content of the downloaded <code class="docutils literal notranslate"><span class="pre">license.lic</span></code> file and set <code class="docutils literal notranslate"><span class="pre">type</span></code> to <code class="docutils literal notranslate"><span class="pre">file</span></code>. Having the license available as a Gitlab variable allows us to update it without having to change the Matlab image.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Alternatively, we could have added the license file directly to the Docker image. With the license file in the same folder as the Dockerfile and adding the following command to the Dockerfile, we can build a Docker image with an activated Matlab:</p>
@@ -327,9 +382,9 @@ The Matlab license is created for a specific user. In the Docker container, we w
 <p>Don’t share any Docker images that contain license files or other confidential information.</p>
 </div>
 </section>
-<section id="step-7-add-a-job-to-test-the-pipeline">
-<h2>Step 7. Add a job to test the pipeline<a class="headerlink" href="#step-7-add-a-job-to-test-the-pipeline" title="Permalink to this headline"></a></h2>
-<p>To test the pipeline, add the following content to <code class="docutils literal notranslate"><span class="pre">.gitlab-ci.yml</span></code> via <strong>CI/CD &gt; Editor</strong> in your repository.</p>
+<section id="step-8-add-a-job-to-test-the-pipeline">
+<h2>Step 8. Add a job to test the pipeline<a class="headerlink" href="#step-8-add-a-job-to-test-the-pipeline" title="Permalink to this headline"></a></h2>
+<p>To test the pipeline, add the following content to <code class="docutils literal notranslate"><span class="pre">.gitlab-ci.yml</span></code> via <code class="docutils literal notranslate"><span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Editor</span></code> in your repository.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">variables</span><span class="p">:</span><span class="w"></span>
 <span class="w">  </span><span class="nt">MAC_ADDRESS</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">02:42:ac:11:ff:ff</span><span class="w"></span>
 
@@ -345,7 +400,7 @@ The Matlab license is created for a specific user. In the Docker container, we w
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sudo mv ${MATLAB_LICENSE} /opt/matlab/licenses/license.lic</span><span class="w">   </span>
 <span class="w">  </span><span class="nt">script</span><span class="p">:</span><span class="w">    </span>
 <span class="w">    </span><span class="c1"># Run a Matlab function/script through the -batch argument</span><span class="w"></span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">matlab -batch &quot;disp(&#39;hello world&#39;)&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">matlab -batch &quot;magic(2)&quot;</span><span class="w"></span>
 </pre></div>
 </div>
 <p>After commiting, the pipeline should run and execute the job <code class="docutils literal notranslate"><span class="pre">check_matlab</span></code>. You can check the status of the pipeline via <code class="docutils literal notranslate"><span class="pre">CI/CD</span> <span class="pre">-&gt;</span> <span class="pre">Pipelines</span></code>.</p>
